@@ -24,7 +24,7 @@ classdef MotionController < handle
        end
        
        
-       function xdes = getXdot(obj, inState)
+       function xdes = getXdes(obj, inState)
            xdes = inState;
        end
    end

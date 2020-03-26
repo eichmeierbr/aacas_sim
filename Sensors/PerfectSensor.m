@@ -1,9 +1,8 @@
 classdef PerfectSensor < VisionSensor
     %RangeSensor Creates a sensor based on a limited range
-
     
     methods (Access = public)
-        function obj = VisionSensor()
+        function obj = PerfectSensor()
             % Create the nominal orientations of the range lines
             if obj.n_lines <= 1 % Single line sensor directly out front
                 obj.orien_nom = 0;
@@ -11,6 +10,7 @@ classdef PerfectSensor < VisionSensor
                 obj.orien_nom = linspace(0,2*pi,obj.n_lines+1);
                 obj.orien_nom = obj.orien_nom(1:end-1); % Remove the duplicate at 2pi
             end
+            obj.fov_h = 180*pi/180/2;
         end
         
         function [xo, yo, dist_o] = getObstacleDetections(obj,q, th, world)
@@ -33,9 +33,13 @@ classdef PerfectSensor < VisionSensor
                 pos = pos(1:2);
                 dist = norm(q-pos);
                 
-                xo = [xo pos(1)];
-                yo = [yo pos(2)];
-                dist_o = [dist_o dist];
+                % Trim Angles with if statement here
+                angle = atan2(pos(2)-q(2),pos(1) - q(1));
+                if and(dist < obj.max_dist,abs(angle-th) < obj.fov_h)
+                    xo = [xo pos(1)];
+                    yo = [yo pos(2)];
+                    dist_o = [dist_o dist];
+                end
             end
             
             obj.plotMeasurements(q, xo,yo);

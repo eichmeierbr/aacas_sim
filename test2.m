@@ -8,7 +8,7 @@ a = Vehicle;
 % a.sensor = RangeSensor;
 % a.sensor = CamLidarFusion;
 a.sensor = PerfectSensor;
-a.controller = waypointG2Gstraight;
+a.controller = velocityFieldController;
 
 b = Obstacle([20 5 0]);
 b.rad = 0.254;
