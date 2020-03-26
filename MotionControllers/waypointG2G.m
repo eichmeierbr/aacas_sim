@@ -8,9 +8,9 @@ classdef waypointG2G < MotionController
         
     end
     methods        
-        function xdes = move(obj,object)
-            xdes = zeros(size(object.state));
-            obj = obj.changeGoalPt(object.state(1:3));
+        function xdes = getXdes(obj,object)
+            xdes = zeros(size(object));
+            obj = obj.changeGoalPt(object(1:3));
             xdes(1:3) = obj.waypoints(obj.goalPt,:);
             
         end

@@ -5,6 +5,7 @@ classdef World < handle
         n_obstacles = 0;
         n_vehicles = 0;
         dt = 0.1;
+        t = 0;
         axis_lims = 30;
     end
     methods
@@ -41,6 +42,7 @@ classdef World < handle
             pbaspect([1 1 1])
             daspect([1 1 1])
             pause(obj.dt)
+            obj.t = obj.t + obj.dt;
         end
         
     end 

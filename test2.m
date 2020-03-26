@@ -6,17 +6,18 @@ addpath Sensors
 
 a = Vehicle;
 % a.sensor = RangeSensor;
-a.sensor = CamLidarFusion;
+% a.sensor = CamLidarFusion;
+a.sensor = PerfectSensor;
 a.controller = waypointG2Gstraight;
 
 b = Obstacle([20 5 0]);
-b.rad = 2;
+b.rad = 0.254;
 b.controller = waypointG2G;
 b.controller.waypoints = [0 5 0; 20 5 0;20 10 0];
 
 
 c = Obstacle([-20 5 0]);
-c.rad = 1.5;
+c.rad = 0.254;
 c.controller = waypointG2G;
 c.controller.waypoints = [-20 0 0;-20 10 0];
 

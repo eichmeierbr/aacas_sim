@@ -9,10 +9,9 @@ classdef Objects < handle
 %       orien     
 %       rot
 %       maxVel
-      controller = dontMove;
-      A = [zeros(3), eye(3), zeros(3,6); zeros(3,12); zeros(3,9) eye(3); zeros(3,12)];
-      B = [zeros(3,6); eye(3), zeros(3); zeros(3,6); zeros(3), eye(3)];
-      K = [eye(3) 1.7321*eye(3) zeros(3,6); zeros(3,6) eye(3) 1.7321*eye(3)];
+
+%       controller = dontMove;
+      controller = MotionController;
    end
    
    methods
@@ -57,11 +56,9 @@ classdef Objects < handle
       end
       
       function [] = tick(obj,world)
-          dt = world.dt;
-           
-          xdes = obj.controller.move(obj);
-          xdot = (obj.A - obj.B*obj.K)*(obj.state - xdes);
-          obj.state = obj.state + xdot * dt;
+          obj.controller.dt = world.dt;
+          obj.controller.t = world.t;
+          obj.state = obj.controller.move(obj.state);
           obj.state_hist = [obj.state_hist, obj.state];
           obj.draw;
       end

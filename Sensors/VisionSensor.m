@@ -44,7 +44,7 @@ classdef VisionSensor < handle
             yo = [];
             dist_o = [];
             obj.our_pos = q;
-            obj.our_th = th
+            obj.our_th = th;
             for i=1:world.n_obstacles
                 pos = world.obstacles(i).getPos(obj.pos_dev, obj.pos_bias);
                 pos = pos(1:2);

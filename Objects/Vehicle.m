@@ -22,7 +22,7 @@ classdef Vehicle < Objects
            Q = eye(12);
            Q(7,7) = 10;
            R = eye(6);
-           obj.K = lqr(obj.A,obj.B,Q,R);
+           obj.controller.K = lqr(obj.controller.A,obj.controller.B,Q,R);
            
            % Read in arguments
           if nargin > 0
@@ -42,10 +42,8 @@ classdef Vehicle < Objects
            tick@Objects(obj,world);
            q = obj.state(1:2);
            th = obj.state(7);
-           [xo, yo, dist_o] = obj.sensor.getObstacleDetections(q,th,world);
-%            if(~isempty(xo))
-%            obj.sensor.plotMeasurements(q, xo, yo);
-%            end
+           obj.controller.detections = obj.sensor.getObstacleDetections(q,th,world);
+
        end
        
        function [] = draw(obj)
