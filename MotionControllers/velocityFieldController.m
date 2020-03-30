@@ -11,7 +11,7 @@ classdef velocityFieldController < MotionController
         switch_dist = 1;
         
         % Orbit params
-        safe_dist = 8;
+        safe_dist = 5.5;
         freq = 1;% Orbit direction (+: CW, -: ccw)
         rad % Radius of orbit
         k_conv = .01; % Gain to converge to orbit
@@ -36,7 +36,6 @@ classdef velocityFieldController < MotionController
         
         function velDes = getXdes(obj,veh_state)
             velDes = zeros(4,1);          
-            goal = obj.waypoints(obj.goalPt,:);
             
             % Check if we are close to an object
             [closeObject, move] = obj.getCloseObject(veh_state);
@@ -60,41 +59,39 @@ classdef velocityFieldController < MotionController
         end
             
         
-       function x_out = move(obj,inState)
-           % Check if we have reached the next waypoint. If so, update
-           obj.changeGoalPt(inState(1:3));
-           obj.inplot=true;
-          obj.plotVectField(inState);
-          obj.inplot=false;
-          
-          x_out = zeros(12,1);
-          velDes = obj.getXdes(inState); % Get velocity vector
-          
-          velDot = (obj.A - obj.B*obj.K)*(inState(4:7) - velDes); % Control
-          
-          % Prepare Output Vector
-          x_out(4:6) = inState(4:6) + velDot(1:3) * obj.dt;
-          x_out(1:3) = inState(1:3) + x_out(4:6)* obj.dt;
-          x_out(10) = inState(10) + velDot(4) * obj.dt;
-          x_out(7) = inState(7) + x_out(7)* obj.dt;
-       end
+        function x_out = move(obj,inState)
+            % Check if we have reached the next waypoint. If so, update
+            obj.changeGoalPt(inState(1:3));
+            obj.inplot=true;
+            obj.plotVectField(inState);
+            obj.inplot=false;
+            
+            x_out = zeros(12,1);
+            velDes = obj.getXdes(inState); % Get velocity vector
+            
+            velDot = (obj.A - obj.B*obj.K)*(inState(4:7) - velDes); % Control
+            
+            % Prepare Output Vector
+            x_out(4:6) = inState(4:6) + velDot(1:3) * obj.dt;
+            x_out(1:3) = inState(1:3) + x_out(4:6)* obj.dt;
+            x_out(10) = inState(10) + velDot(4) * obj.dt;
+            x_out(7) = inState(7) + x_out(7)* obj.dt;
+        end
         
        function [closeObject, move] = getCloseObject(obj, veh_state)
            closeObject = Detections;
            closeObject.dist = obj.safe_dist;
            move = false;
-           
-           goal = obj.waypoints(obj.goalPt,:);
+
            % Perform transformed coordinates
-           dp = goal' - veh_state(1:3);
-           th = wrapToPi(atan2(dp(2),dp(1)) - pi/2);
-           R_ov = [cos(th) -sin(th); sin(th) cos(th)];
-           t_ov = veh_state(1:2);
-           T_vo = [R_ov' -R_ov'*t_ov; 0 0 1];          
+            T_vo = obj.transformToGoalCoords(veh_state);        
            
            for i=1:size(obj.detections)
-               if obj.detections(i).dist < closeObject.dist
-                   closeObject = obj.detections(i);
+               obst = obj.detections(i);
+               pos = [obst.pos(1:2); 1];
+               obst_trans = T_vo * pos;
+               if all([obst.dist < closeObject.dist, obst_trans(2) > 0])
+                   closeObject = obst;
                    move = true;
                end
            end
@@ -112,25 +109,46 @@ classdef velocityFieldController < MotionController
 
         function plotVectField(obj, in_state)
             check_state = in_state;
-            cushion = 20;
-            spacing = 3;
+            cushion = 10;
+            spacing = cushion/4;
             x_in = in_state(1)-cushion:spacing:in_state(1)+cushion;  
             y_in = in_state(2)-cushion:spacing:in_state(2)+cushion;
 
             [x,y] = meshgrid(x_in, y_in);
             xVec = zeros(size(x));
             yVec = zeros(size(y));
+            
+            orig_dists = [];
+            for k=1:length(obj.detections)
+                orig_dists = [orig_dists obj.detections(k).dist];
+            end
+            
+            original_detections = obj.detections;
             for i=1:length(x_in)
                 for j=1:length(y_in)
+                    
+                    % Update vehicle state
                     check_state(1) = x_in(j);
                     check_state(2) = y_in(i);
+                    
+                    % Modify detections
+                    for k=1:length(obj.detections)
+                        obj.detections(k).dist = norm(check_state(1:3)-obj.detections(k).pos);
+                    end
+                    
                     velo = getXdes(obj,check_state);
                     xVec(i,j) = velo(1);
                     yVec(i,j) = velo(2);
                 end
             end
-
-            quiver(x,y,xVec,yVec,'k-')            
+            
+            % Restore vehicle state
+            for k=1:length(obj.detections)
+               obj.detections(k).dist = orig_dists;
+            end
+            
+            scale = 3;
+            quiver(x,y,xVec/scale,yVec/scale,'Color' ,'#7E2F8E', 'AutoScale','off')            
         end
         
         function w_d = headingControl(obj, velDes, veh_state)
@@ -162,14 +180,10 @@ classdef velocityFieldController < MotionController
             
             obst_vel = closeObst.vel;
             obst_pos = closeObst.pos;
-            goal = obj.waypoints(obj.goalPt,:);
+            
             
             % Perform transformed coordinates
-            dp = goal' - veh_state(1:3);
-            th = wrapToPi(atan2(dp(2),dp(1)) - pi/2);
-            R_ov = [cos(th) -sin(th); sin(th) cos(th)];
-            t_ov = veh_state(1:2);
-            T_vo = [R_ov' -R_ov'*t_ov; 0 0 1];
+            T_vo = obj.transformToGoalCoords(veh_state);
             
             trans_vel = T_vo * [obst_vel(1:2); 0];
             trans_pos = T_vo * [obst_pos(1:2); 1];
@@ -209,6 +223,15 @@ classdef velocityFieldController < MotionController
                 g = obj.vel/v_g * g; 
             end
         end
+       
         
+        function T_vo = transformToGoalCoords(obj, veh_state)
+            goal = obj.waypoints(obj.goalPt,:);
+            dp = goal' - veh_state(1:3);
+            th = wrapToPi(atan2(dp(2),dp(1)) - pi/2);
+            R_ov = [cos(th) -sin(th); sin(th) cos(th)];
+            t_ov = veh_state(1:2);
+            T_vo = [R_ov' -R_ov'*t_ov; 0 0 1];
+        end
     end
 end

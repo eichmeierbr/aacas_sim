@@ -19,6 +19,7 @@ classdef MotionController < handle
        function x_out = move(obj,inState)
           xdes = obj.getXdes(inState); 
           xdot = (obj.A - obj.B*obj.K)*(inState - xdes);
+          
           x_out = inState + xdot * obj.dt;
            
        end

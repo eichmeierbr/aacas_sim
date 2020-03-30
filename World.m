@@ -6,7 +6,7 @@ classdef World < handle
         n_vehicles = 0;
         dt = 0.1;
         t = 0;
-        axis_lims = 30;
+        axis_lims = 10;
     end
     methods
         function [] = addObject(obj, new_obj)
@@ -39,6 +39,8 @@ classdef World < handle
             
             xlim([pos(1)-obj.axis_lims, pos(1)+obj.axis_lims]);
             ylim([pos(2)-obj.axis_lims, pos(2)+obj.axis_lims]);
+            xlabel('X Position (m)')
+            ylabel('Y Position (m)')
             pbaspect([1 1 1])
             daspect([1 1 1])
             pause(.1)
