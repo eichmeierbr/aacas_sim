@@ -43,7 +43,7 @@ classdef Objects < handle
       function v = getVel(obj,dev,bias)
            v = obj.state(4:6);
            if(nargin >1)
-              for i = 1:length(p)
+              for i = 1:length(v)
                    v(i) =v(i)+ bias + dev*randn;
               end
            end

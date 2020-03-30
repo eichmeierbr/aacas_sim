@@ -41,7 +41,7 @@ classdef World < handle
             ylim([pos(2)-obj.axis_lims, pos(2)+obj.axis_lims]);
             pbaspect([1 1 1])
             daspect([1 1 1])
-            pause(obj.dt)
+            pause(.1)
             obj.t = obj.t + obj.dt;
         end
         

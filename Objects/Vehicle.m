@@ -20,7 +20,7 @@ classdef Vehicle < Objects
            
            % Set Controller
            Q = eye(12);
-           Q(7,7) = 10;
+           Q(7,7) = 100;
            R = eye(6);
            obj.controller.K = lqr(obj.controller.A,obj.controller.B,Q,R);
            

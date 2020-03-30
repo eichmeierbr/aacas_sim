@@ -30,7 +30,7 @@ classdef VisionSensor < handle
             end
         end
         
-        function [xo, yo, dist_o] = getObstacleDetections(obj,q, th, world)
+        function detections = getObstacleDetections(obj,q, th, world)
             %getDistanceToObstacles Summary of this method goes here
             %   q: position of the robot
             %   th: orientation of the robot
@@ -42,6 +42,7 @@ classdef VisionSensor < handle
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             xo = [];
             yo = [];
+            detections = [];
             dist_o = [];
             obj.our_pos = q;
             obj.our_th = th;
@@ -51,10 +52,16 @@ classdef VisionSensor < handle
                 dist = norm(q-pos);
                 
                 angle = atan2(pos(2)-q(2),pos(1) - q(1));
-                if and(dist < obj.max_dist,abs(angle-th) < obj.fov_h)
+                if and(dist < obj.max_dist,wrapToPi(abs(angle-th)) < obj.fov_h)
                     xo = [xo pos(1)];
                     yo = [yo pos(2)];
                     dist_o = [dist_o dist];
+                    
+                    newDetect = Detections;
+                    newDetect.pos = world.obstacles(i).getPos(obj.pos_dev, obj.pos_bias);
+                    newDetect.vel = world.obstacles(i).getVel(obj.pos_dev, obj.pos_bias);
+                    newDetect.dist = dist_o;
+                    detections = [detections newDetect];
                 end
             end
             

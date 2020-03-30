@@ -1,5 +1,9 @@
 classdef RangeSensor < handle
     %RangeSensor Creates a sensor based on a limited range
+    properties
+        dev = 0;
+        bias = 0;
+    end
     
     properties (SetAccess = protected, GetAccess = public)
         n_lines = 30; % Number of range measurements
@@ -25,7 +29,7 @@ classdef RangeSensor < handle
             end
         end
         
-        function [xo, yo, dist_o] = getObstacleDetections(obj,q, th, world)
+        function detections = getObstacleDetections(obj,q, th, world)
             %getDistanceToObstacles Summary of this method goes here
             %   q: position of the robot
             %   th: orientation of the robot
@@ -41,6 +45,7 @@ classdef RangeSensor < handle
             [x, y] = pol2cart(obj.orien_nom+th, obj.max_dist);
             x = x + q(1);
             y = y + q(2);
+            detections = [];
             
             % Initialize the obstacle points
             xo = ones(obj.n_lines, 1) * inf;
@@ -62,9 +67,16 @@ classdef RangeSensor < handle
                     % Store data if the distance is less than previously
                     % seen
                     if dist_tmp < dist_o(l)
+
                         dist_o(l) = dist_tmp;
                         xo(l) = xk;
                         yo(l) = yk;
+                        
+                        newDetect = Detections;
+                        newDetect.pos = world.obstacles(k).getPos(obj.dev, obj.bias);
+                        newDetect.vel = world.obstacles(k).getVel(obj.dev, obj.bias);;
+                        newDetect.dist = dist_o;
+                        detections = [detections newDetect];
                     end
                 end
             end
